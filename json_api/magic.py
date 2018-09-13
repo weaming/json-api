@@ -1,6 +1,7 @@
 from functools import partial
 from .validate import valida_request_query, MissingQueryException
 from .signature import get_signature
+from .middleware import check_middlewares
 
 
 class Magic(object):
@@ -60,7 +61,12 @@ class Magic(object):
 
         if isinstance(data, dict):
             if "success" not in data:
-                data["success"] = True if rv_kw.get("status", 200) < 400 else False
+                data["success"] = (
+                    True
+                    if self.get_status_code_from_second_return_value(rv_kw) < 400
+                    else False
+                )
+        return data
 
     def get_final_response_from_dict(self, rv, rv_kw):
         raise NotImplemented
@@ -90,13 +96,13 @@ class Magic(object):
 
         if isinstance(rv, dict):
             return self.get_final_response_from_dict(
-                self.post_process_return_dict(rv), rv_kw
+                self.post_process_return_dict(rv, rv_kw), rv_kw
             )
         else:
             # if not dict, return the return value directly
             return rv
 
-    def get_handler_parameters(args, kwargs):
+    def get_handler_parameters(self, args, kwargs):
         if self.first_argument_is_request:
             # shift the request instance
             return args[1:], kwargs
@@ -111,7 +117,15 @@ class Magic(object):
             "status": status,
         }
 
-    def json_api(self, fn):
+    def get_query_args(self, req):
+        return {
+            k: v[0] if v and isinstance(v, list) else v for k, v in req.args.items()
+        }
+
+    def json_api(self, fn, middlewares=None):
+        """
+        :return: return a handler function accept the `request` object as positional argument
+        """
         args, kwargs = get_signature(fn)
         args, kwargs = self.get_handler_parameters(args, kwargs)
 
@@ -119,11 +133,20 @@ class Magic(object):
 
             async def new_fn(req):
                 try:
-                    q_args, q_kwargs = valida_request_query(req, *args, **kwargs)
+                    q_args, q_kwargs = valida_request_query(
+                        self.get_query_args(req), *args, **kwargs
+                    )
                 except MissingQueryException as e:
                     status = 400
                     rv = (self.error_return_dict(e, status), status)
-                    return check_return(rv)
+                    return self.check_return(rv)
+
+                try:
+                    check_middlewares(middlewares or [], req)
+                except Exception as e:
+                    status = 400
+                    rv = (self.error_return_dict(e, status), status)
+                    return self.check_return(rv)
 
                 try:
                     rv = await fn(req, *q_args, **q_kwargs)
@@ -131,17 +154,19 @@ class Magic(object):
                     status = 500
                     rv = (self.error_return_dict(e, status), status)
 
-                return check_return(rv)
+                return self.check_return(rv)
 
         else:
 
             def new_fn(req):
                 try:
-                    q_args, q_kwargs = valida_request_query(req, *args, **kwargs)
+                    q_args, q_kwargs = valida_request_query(
+                        self.get_query_args(req), *args, **kwargs
+                    )
                 except MissingQueryException as e:
                     status = 400
                     rv = (self.error_return_dict(e, status), status)
-                    return check_return(rv)
+                    return self.check_return(rv)
 
                 try:
                     rv = fn(req, *q_args, **q_kwargs)
@@ -149,7 +174,7 @@ class Magic(object):
                     status = 500
                     rv = (self.error_return_dict(e, status), status)
 
-                return check_return(rv)
+                return self.check_return(rv)
 
         return new_fn
 

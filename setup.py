@@ -14,7 +14,7 @@ gh_repo = 'https://github.com/weaming/json-api'
 setup(
     name='json-api',  # Required
 
-    version='0.1.2',  # Required
+    version='0.1.3',  # Required
 
     # This is a one-line description or tagline of what your project does.
     description="A abstract struct to write helper to handle other's frameworks' response result, whose type is JSON, plain text or other unknown local results to corresponding framework.",  # Required
