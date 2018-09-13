@@ -1,0 +1,6 @@
+*.swp
+*.py[cod]
+build/
+dist/
+*.egg-info/
+.pytest_cache/
