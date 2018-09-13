@@ -90,8 +90,7 @@ class Magic(object):
 
         if isinstance(rv, dict):
             return self.get_final_response_from_dict(
-                self.post_process_return_dict(rv),
-                rv_kw,
+                self.post_process_return_dict(rv), rv_kw
             )
         else:
             # if not dict, return the return value directly
@@ -105,37 +104,54 @@ class Magic(object):
             return args, kwargs
 
     def error_return_dict(self, exception, status):
-        return {"success": False, "reason": exception, "type": str(type(exception)), "status": status}
+        return {
+            "success": False,
+            "reason": exception,
+            "type": str(type(exception)),
+            "status": status,
+        }
 
     def json_api(self, fn):
-        def new_fn(req):
-            args, kwargs = get_signature(fn)
-            args, kwargs = self.get_handler_parameters(args, kwargs)
-
-            try:
-                q_args, q_kwargs = valida_request_query(req, *args, **kwargs)
-            except MissingQueryException as e:
-                status = 400
-                rv = (self.error_return_dict(e, status), status)
-                return check_return(rv)
-
-            try:
-                if self.handler_is_async:
-                    rv = await fn(req, *q_args, **q_kwargs)
-                else:
-                    rv = fn(req, *q_args, **q_kwargs)
-            except Exception as e:
-                status = 500
-                rv = (self.error_return_dict(e, status), status)
-
-            return check_return(rv)
+        args, kwargs = get_signature(fn)
+        args, kwargs = self.get_handler_parameters(args, kwargs)
 
         if self.handler_is_async:
-            async def async_new_fn(req):
-                return new_fn(req)
-            return async_new_fn
+
+            async def new_fn(req):
+                try:
+                    q_args, q_kwargs = valida_request_query(req, *args, **kwargs)
+                except MissingQueryException as e:
+                    status = 400
+                    rv = (self.error_return_dict(e, status), status)
+                    return check_return(rv)
+
+                try:
+                    rv = await fn(req, *q_args, **q_kwargs)
+                except Exception as e:
+                    status = 500
+                    rv = (self.error_return_dict(e, status), status)
+
+                return check_return(rv)
+
         else:
-            return new_fn
+
+            def new_fn(req):
+                try:
+                    q_args, q_kwargs = valida_request_query(req, *args, **kwargs)
+                except MissingQueryException as e:
+                    status = 400
+                    rv = (self.error_return_dict(e, status), status)
+                    return check_return(rv)
+
+                try:
+                    rv = fn(req, *q_args, **q_kwargs)
+                except Exception as e:
+                    status = 500
+                    rv = (self.error_return_dict(e, status), status)
+
+                return check_return(rv)
+
+        return new_fn
 
     def add_route(self, pattern, handler_fn, **kwargs):
         raise NotImplemented("not implemented for add_route")
