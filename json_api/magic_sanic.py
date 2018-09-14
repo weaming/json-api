@@ -8,9 +8,9 @@ class MagicSanic(Magic):
     def set_app(self, app):
         self.app = app
 
-    def add_route(self, pattern, handler_fn, middlewares=None, **kwargs):
+    def add_route(self, pattern, handler_fn, middleware_list=None, **kwargs):
         self.app.route(pattern, **kwargs)(
-            self.json_api(handler_fn, middlewares=middlewares)
+            self.json_api(handler_fn, middleware_list=middleware_list)
         )
 
     def get_final_response_from_dict(self, rv, rv_kw):

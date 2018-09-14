@@ -1,3 +1,3 @@
-def check_middlewares(middlewares, req):
-    for md in middlewares:
+def check_middleware_list(middleware_list, req):
+    for md in middleware_list:
         md(req)

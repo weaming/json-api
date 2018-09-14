@@ -1,7 +1,7 @@
 from functools import partial
 from .validate import valida_request_query, MissingQueryException
 from .signature import get_signature
-from .middleware import check_middlewares
+from .middleware import check_middleware_list
 
 
 class Magic(object):
@@ -122,7 +122,7 @@ class Magic(object):
             k: v[0] if v and isinstance(v, list) else v for k, v in req.args.items()
         }
 
-    def json_api(self, fn, middlewares=None):
+    def json_api(self, fn, middleware_list=None):
         """
         :return: return a handler function accept the `request` object as positional argument
         """
@@ -142,7 +142,7 @@ class Magic(object):
                     return self.check_return(rv)
 
                 try:
-                    check_middlewares(middlewares or [], req)
+                    check_middleware_list(middleware_list or [], req)
                 except Exception as e:
                     status = 400
                     rv = (self.error_return_dict(e, status), status)
