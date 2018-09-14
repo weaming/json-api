@@ -13,7 +13,7 @@ gh_repo = "https://github.com/weaming/json-api"
 
 setup(
     name="json-api",  # Required
-    version="0.1.4",  # Required
+    version="0.1.6",  # Required
     # This is a one-line description or tagline of what your project does.
     description="Make you focus on writting business logic code, just return dict data for API, or other Response directly.",  # Required
     long_description=long_description,  # Optional

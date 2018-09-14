@@ -1,3 +1,5 @@
+from functools import wraps
+
 from .validate import valida_request_query, MissingQueryException
 from .signature import get_signature
 from .middleware import check_middleware_list
@@ -33,7 +35,8 @@ class Magic(object):
         return rv_kw
 
     def get_status_code_from_second_return_value(self, second):
-        if second is None:
+        # blank dict or None
+        if not second:
             return 200
 
         if isinstance(second, int):
@@ -75,28 +78,26 @@ class Magic(object):
         :param rv: the return value of handle functions
         """
         if isinstance(rv, tuple):
-            rv, status = rv[0], rv[1]
-            if isinstance(status, dict):
+            rv, second = rv[0], rv[1]
+            if isinstance(second, dict):
                 # return kw dict directly
-                rv_kw = status
-            elif isinstance(status, int):
+                rv_kw = second
+            elif isinstance(second, int):
                 # overwrite this method to create kw dict from status returned
-                rv_kw = self.new_kw_from_response_status(status)
+                rv_kw = self.new_kw_from_response_status(second)
             else:
                 raise Exception(
                     "unaccepted second return value: {}, type: {}".format(
-                        status, type(status)
+                        second, type(second)
                     )
                 )
         else:
             rv_kw = {}
 
-        rv_kw = self.set_default_headers(rv_kw)
-
         if isinstance(rv, dict):
-            return self.get_final_response_from_dict(
-                self.post_process_return_dict(rv, rv_kw), rv_kw
-            )
+            rv = self.post_process_return_dict(rv, rv_kw)
+            rv_kw = self.set_default_headers(rv_kw)
+            return self.get_final_response_from_dict(rv, rv_kw)
         else:
             # if not dict, return the return value directly
             return rv
@@ -130,6 +131,7 @@ class Magic(object):
 
         if self.handler_is_async:
 
+            @wraps(fn)
             async def new_fn(req):
                 try:
                     q_args, q_kwargs = valida_request_query(
@@ -157,12 +159,20 @@ class Magic(object):
 
         else:
 
+            @wraps(fn)
             def new_fn(req):
                 try:
                     q_args, q_kwargs = valida_request_query(
                         self.get_query_args(req), *args, **kwargs
                     )
                 except MissingQueryException as e:
+                    status = 400
+                    rv = (self.error_return_dict(e, status), status)
+                    return self.check_return(rv)
+
+                try:
+                    check_middleware_list(middleware_list or [], req)
+                except Exception as e:
                     status = 400
                     rv = (self.error_return_dict(e, status), status)
                     return self.check_return(rv)
