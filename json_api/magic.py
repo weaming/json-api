@@ -1,4 +1,3 @@
-from functools import partial
 from .validate import valida_request_query, MissingQueryException
 from .signature import get_signature
 from .middleware import check_middleware_list
@@ -10,7 +9,7 @@ class Magic(object):
         self.handler_is_async = False
 
         self.server_name = "JSON API"
-        self.add_repo_in_headers = True
+        self.add_repo_in_headers = False
         self.gh_repo = "https://github.com/weaming/json-api"
 
         for k, v in kwargs.items():
