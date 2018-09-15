@@ -1,7 +1,8 @@
-from .magic import Magic
+from .magic import DefaultMagic
+from .errors import ExceptionWithStatusCode
 
 
-class MagicSanic(Magic):
+class MagicSanic(DefaultMagic):
     def init(self):
         self.handler_is_async = True
         self.add_repo_in_headers = True
@@ -9,10 +10,16 @@ class MagicSanic(Magic):
     def set_app(self, app):
         self.app = app
 
-    def get_query_args(self, req):
+    def get_query_args(self, request):
         return {
-            k: v[0] if v and isinstance(v, list) else v for k, v in req.args.items()
+            k: v[0] if v and isinstance(v, list) else v for k, v in request.args.items()
         }
+
+    def get_request_json(self, request):
+        try:
+            return request.json
+        except Exception as e:
+            raise ExceptionWithStatusCode(str(e), status=400)
 
     def add_route(self, pattern, handler_fn, middleware_list=None, **kwargs):
         self.app.route(pattern, **kwargs)(

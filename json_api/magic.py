@@ -11,26 +11,18 @@ class Magic(object):
         self.first_argument_is_request = True
         self.handler_is_async = False
 
-        self.server_name = "JSON API"
-        self.add_repo_in_headers = False
-        self.gh_repo = "https://github.com/weaming/json-api"
+        self.pre_init()
 
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-        # method to do custom
-        self.init()
+        self.post_init()
 
-    def init(self):
+    def pre_init(self):
         pass
 
-    def set_default_headers(self, rv_kw):
-        headers = rv_kw.setdefault("headers", {})
-        headers.update({"X-Served-By": self.server_name})
-        headers.update({"Access-Control-Allow-Origin": "*"})
-        if self.add_repo_in_headers:
-            headers.update({"X-Server-Repo": self.gh_repo})
-        return rv_kw
+    def post_init(self):
+        pass
 
     def get_status_code_from_second_return_value(self, second):
         # blank dict or None
@@ -99,14 +91,6 @@ class Magic(object):
         else:
             return args, kwargs
 
-    def error_return_dict(self, exception, status):
-        return {
-            "success": False,
-            "reason": str(exception),
-            "type": str(type(exception)),
-            "status": status,
-        }
-
     def json_api(self, fn, middleware_list=None):
         """
         :return: return a handler function accept the `request` object as positional argument
@@ -117,10 +101,10 @@ class Magic(object):
         if self.handler_is_async:
 
             @wraps(fn)
-            async def new_fn(req):
+            async def new_fn(request):
                 try:
                     q_args, q_kwargs = valida_request_query(
-                        self.get_query_args(req), *args, **kwargs
+                        self.get_query_args(request), *args, **kwargs
                     )
                 except MissingQueryException as e:
                     status = getattr(e, "status", 400)
@@ -128,14 +112,14 @@ class Magic(object):
                     return self.check_return(rv)
 
                 try:
-                    check_middleware_list(middleware_list or [], req)
+                    check_middleware_list(middleware_list or [], request)
                 except Exception as e:
                     status = getattr(e, "status", 400)
                     rv = (self.error_return_dict(e, status), status)
                     return self.check_return(rv)
 
                 try:
-                    rv = await fn(req, *q_args, **q_kwargs)
+                    rv = await fn(request, *q_args, **q_kwargs)
                 except Exception as e:
                     status = getattr(e, "status", 500)
                     rv = (self.error_return_dict(e, status), status)
@@ -145,10 +129,10 @@ class Magic(object):
         else:
 
             @wraps(fn)
-            def new_fn(req):
+            def new_fn(request):
                 try:
                     q_args, q_kwargs = valida_request_query(
-                        self.get_query_args(req), *args, **kwargs
+                        self.get_handler_arguments(request), *args, **kwargs
                     )
                 except MissingQueryException as e:
                     status = getattr(e, "status", 400)
@@ -156,14 +140,14 @@ class Magic(object):
                     return self.check_return(rv)
 
                 try:
-                    check_middleware_list(middleware_list or [], req)
+                    check_middleware_list(middleware_list or [], request)
                 except Exception as e:
                     status = getattr(e, "status", 400)
                     rv = (self.error_return_dict(e, status), status)
                     return self.check_return(rv)
 
                 try:
-                    rv = fn(req, *q_args, **q_kwargs)
+                    rv = fn(request, *q_args, **q_kwargs)
                 except Exception as e:
                     status = getattr(e, "status", 500)
                     rv = (self.error_return_dict(e, status), status)
@@ -173,24 +157,83 @@ class Magic(object):
         return new_fn
 
     @staticmethod
-    def json_dumps(data, **kwargs):
+    def json_dumps(data, **kwargs) -> str:
         kw = {"ensure_ascii": False}
         kw.update(**kwargs)
         return json.dumps(data, **kw)
 
-    def new_kw_from_response_status(self, status):
-        return {"status": status}
+    def get_handler_arguments(self, request) -> dict:
+        if self.is_get(request):
+            return self.get_query_args(request)
+        elif self.is_post(request):
+            return self.get_request_json(request)
+        else:
+            raise NotImplemented("not implemented for get_handler_arguments()")
 
-    def get_status_code_from_second_return_dict(self, second):
+    def new_kw_from_response_status(self, status) -> dict:
+        raise NotImplemented("not implemented for new_kw_from_response_status()")
+
+    def get_status_code_from_second_return_dict(self, second) -> int:
         raise NotImplemented(
             "not implemented for get_status_code_from_second_return_dict()"
         )
 
-    def get_query_args(self, req):
+    @staticmethod
+    def is_get(request) -> bool:
+        raise NotImplemented("not implemented for is_get()")
+
+    @staticmethod
+    def is_post(request) -> bool:
+        raise NotImplemented("not implemented for is_post()")
+
+    def get_query_args(self, request) -> dict:
         raise NotImplemented("not implemented for get_query_args()")
+
+    def get_request_json(self, request) -> dict:
+        raise NotImplemented("not implemented for get_request_json()")
 
     def add_route(self, pattern, handler_fn, **kwargs):
         raise NotImplemented("not implemented for add_route()")
 
+    def set_default_headers(self, rv_kw):
+        raise NotImplemented("not implemented for set_default_headers()")
+
+    def error_return_dict(self, exception, status):
+        raise NotImplemented("not implemented for error_return_dict()")
+
     def get_final_response_from_dict(self, rv, rv_kw):
         raise NotImplemented("not implemented for get_final_response_from_dict()")
+
+
+class DefaultMagic(Magic):
+    def pre_init(self):
+        self.server_name = "JSON API"
+        self.add_repo_in_headers = False
+        self.gh_repo = "https://github.com/weaming/json-api"
+
+    @staticmethod
+    def is_get(request):
+        return request.method == "GET"
+
+    @staticmethod
+    def is_post(request):
+        return request.method == "POST"
+
+    def set_default_headers(self, rv_kw):
+        headers = rv_kw.setdefault("headers", {})
+        headers.update({"X-Served-By": self.server_name})
+        headers.update({"Access-Control-Allow-Origin": "*"})
+        if self.add_repo_in_headers:
+            headers.update({"X-Server-Repo": self.gh_repo})
+        return rv_kw
+
+    def new_kw_from_response_status(self, status):
+        return {"status": status}
+
+    def error_return_dict(self, exception, status):
+        return {
+            "success": False,
+            "reason": str(exception),
+            "type": str(type(exception)),
+            "status": status,
+        }
