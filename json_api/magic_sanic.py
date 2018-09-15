@@ -4,6 +4,7 @@ from .magic import Magic
 class MagicSanic(Magic):
     def init(self):
         self.handler_is_async = True
+        self.add_repo_in_headers = True
 
     def set_app(self, app):
         self.app = app

@@ -1,5 +1,4 @@
-class MissingQueryException(Exception):
-    pass
+from .errors import MissingQueryException
 
 
 def valida_request_query(request_args, *args, **kwargs):
@@ -7,7 +6,7 @@ def valida_request_query(request_args, *args, **kwargs):
     q_kwargs = {}
     for k in args:
         if k not in request_args:
-            raise MissingQueryException("missing {}".format(k))
+            raise MissingQueryException("missing {}".format(k), status=400)
         else:
             # only need the first
             q_args.append(request_args[k])

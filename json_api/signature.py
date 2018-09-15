@@ -15,7 +15,7 @@ def get_signature(fn):
     return args, kwargs
 
 
-def test_sig():
+def test_get_sinature():
     def fn(a, b, c, d=3, e="abc"):
         pass
 
@@ -24,4 +24,4 @@ def test_sig():
     )
 
 
-test_sig()
+test_get_sinature()

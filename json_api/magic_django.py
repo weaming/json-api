@@ -11,7 +11,6 @@ class MagicDjango(Magic):
     def get_final_response_from_dict(self, rv, rv_kw):
         from django.http import HttpResponse
 
-        json_kwargs = rv_kw.get("json_kwargs", {})
-        json_kwargs.update(ensure_ascii=False)
-        data = json.dumps(rv, **json_kwargs)
+        dump_kwargs = rv_kw.get("dump_kwargs", {})
+        data = self.json_dumps(rv, **dump_kwargs)
         return HttpResponse(content=data, content_type="application/json", **rv_kw)

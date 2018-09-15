@@ -1,3 +1,4 @@
+import json
 from functools import wraps
 
 from .validate import valida_request_query, MissingQueryException
@@ -22,9 +23,6 @@ class Magic(object):
 
     def init(self):
         pass
-
-    def new_kw_from_response_status(self, status):
-        return {"status": status}
 
     def set_default_headers(self, rv_kw):
         headers = rv_kw.setdefault("headers", {})
@@ -125,21 +123,21 @@ class Magic(object):
                         self.get_query_args(req), *args, **kwargs
                     )
                 except MissingQueryException as e:
-                    status = 400
+                    status = getattr(e, "status", 400)
                     rv = (self.error_return_dict(e, status), status)
                     return self.check_return(rv)
 
                 try:
                     check_middleware_list(middleware_list or [], req)
                 except Exception as e:
-                    status = 400
+                    status = getattr(e, "status", 400)
                     rv = (self.error_return_dict(e, status), status)
                     return self.check_return(rv)
 
                 try:
                     rv = await fn(req, *q_args, **q_kwargs)
                 except Exception as e:
-                    status = 500
+                    status = getattr(e, "status", 500)
                     rv = (self.error_return_dict(e, status), status)
 
                 return self.check_return(rv)
@@ -153,29 +151,40 @@ class Magic(object):
                         self.get_query_args(req), *args, **kwargs
                     )
                 except MissingQueryException as e:
-                    status = 400
+                    status = getattr(e, "status", 400)
                     rv = (self.error_return_dict(e, status), status)
                     return self.check_return(rv)
 
                 try:
                     check_middleware_list(middleware_list or [], req)
                 except Exception as e:
-                    status = 400
+                    status = getattr(e, "status", 400)
                     rv = (self.error_return_dict(e, status), status)
                     return self.check_return(rv)
 
                 try:
                     rv = fn(req, *q_args, **q_kwargs)
                 except Exception as e:
-                    status = 500
+                    status = getattr(e, "status", 500)
                     rv = (self.error_return_dict(e, status), status)
 
                 return self.check_return(rv)
 
         return new_fn
 
+    @staticmethod
+    def json_dumps(data, **kwargs):
+        kw = {"ensure_ascii": False}
+        kw.update(**kwargs)
+        return json.dumps(data, **kw)
+
+    def new_kw_from_response_status(self, status):
+        return {"status": status}
+
     def get_status_code_from_second_return_dict(self, second):
-        raise NotImplemented("not implemented for get_status_code_from_second_return_dict()")
+        raise NotImplemented(
+            "not implemented for get_status_code_from_second_return_dict()"
+        )
 
     def get_query_args(self, req):
         raise NotImplemented("not implemented for get_query_args()")
