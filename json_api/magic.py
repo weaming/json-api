@@ -112,7 +112,7 @@ class Magic(object):
     def error_return_dict(self, exception, status):
         return {
             "success": False,
-            "reason": exception,
+            "reason": str(exception),
             "type": str(type(exception)),
             "status": status,
         }
