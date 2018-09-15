@@ -1,9 +1,10 @@
 import json
 from functools import wraps
 
-from .validate import valida_request_query, MissingQueryException
+from .validate import valida_request_query
 from .signature import get_signature
 from .middleware import check_middleware_list
+from .errors import MissingRequestDataException
 
 
 class Magic(object):
@@ -104,9 +105,9 @@ class Magic(object):
             async def new_fn(request):
                 try:
                     q_args, q_kwargs = valida_request_query(
-                        self.get_query_args(request), *args, **kwargs
+                        self.get_handler_arguments(request), *args, **kwargs
                     )
-                except MissingQueryException as e:
+                except MissingRequestDataException as e:
                     status = getattr(e, "status", 400)
                     rv = (self.error_return_dict(e, status), status)
                     return self.check_return(rv)
@@ -134,7 +135,7 @@ class Magic(object):
                     q_args, q_kwargs = valida_request_query(
                         self.get_handler_arguments(request), *args, **kwargs
                     )
-                except MissingQueryException as e:
+                except MissingRequestDataException as e:
                     status = getattr(e, "status", 400)
                     rv = (self.error_return_dict(e, status), status)
                     return self.check_return(rv)

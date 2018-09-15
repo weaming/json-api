@@ -3,7 +3,7 @@ from .errors import ExceptionWithStatusCode
 
 
 class MagicSanic(DefaultMagic):
-    def init(self):
+    def post_init(self):
         self.handler_is_async = True
         self.add_repo_in_headers = True
 

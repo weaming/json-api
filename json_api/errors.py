@@ -8,5 +8,13 @@ class ExceptionWithStatusCode(APIBaseException):
         self.status = status
 
 
-class MissingQueryException(ExceptionWithStatusCode):
+class MissingRequestDataException(ExceptionWithStatusCode):
+    pass
+
+
+class MissingQueryException(MissingRequestDataException):
+    pass
+
+
+class MissingBodyDataException(MissingRequestDataException):
     pass
