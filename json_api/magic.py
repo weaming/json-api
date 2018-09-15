@@ -52,11 +52,6 @@ class Magic(object):
             "can not handle second value: {}, type {}".format(second, type(second))
         )
 
-    def get_status_code_from_second_return_dict(self, second):
-        raise NotImplemented(
-            "please overwrite get_status_code_from_second_return_dict() to handle second response dict"
-        )
-
     def post_process_return_dict(self, data, rv_kw):
         if data is None:
             return
@@ -69,9 +64,6 @@ class Magic(object):
                     else False
                 )
         return data
-
-    def get_final_response_from_dict(self, rv, rv_kw):
-        raise NotImplemented
 
     def check_return(self, rv):
         """
@@ -115,11 +107,6 @@ class Magic(object):
             "reason": str(exception),
             "type": str(type(exception)),
             "status": status,
-        }
-
-    def get_query_args(self, req):
-        return {
-            k: v[0] if v and isinstance(v, list) else v for k, v in req.args.items()
         }
 
     def json_api(self, fn, middleware_list=None):
@@ -187,5 +174,14 @@ class Magic(object):
 
         return new_fn
 
+    def get_status_code_from_second_return_dict(self, second):
+        raise NotImplemented("not implemented for get_status_code_from_second_return_dict()")
+
+    def get_query_args(self, req):
+        raise NotImplemented("not implemented for get_query_args()")
+
     def add_route(self, pattern, handler_fn, **kwargs):
-        raise NotImplemented("not implemented for add_route")
+        raise NotImplemented("not implemented for add_route()")
+
+    def get_final_response_from_dict(self, rv, rv_kw):
+        raise NotImplemented("not implemented for get_final_response_from_dict()")
