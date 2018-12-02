@@ -4,6 +4,8 @@ Make you focus on writting business logic code, just return dict data for API, o
 
 What you need to do is inherit the Magic class and overwrite several methods, then use method it provides to add route to your framework app.
 
+The key point is it's api `magic.json_api(view_func)` wraps your logic code, then check the request data and reponse data.
+
 ```
 pip3 install json-api
 ```
@@ -46,4 +48,21 @@ magic.add_route("/api/user/info", get_user_information)
 if __name__ == "__main__":
     debug = True if os.getenv("DEBUG") else False
     app.run(host="0.0.0.0", port=8000, debug=debug)
+```
+
+### Django Example
+
+```
+from json_api.magic_django import MagicDjango
+from .utils import JSONEncoder
+
+magic = MagicDjango()
+magic.encoder = JSONEncoder
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include([
+        path('translate', magic.json_api(trans))
+    ]))
+]
 ```
