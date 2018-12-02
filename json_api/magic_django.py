@@ -4,9 +4,13 @@ from .errors import ExceptionWithStatusCode
 
 
 class MagicDjango(DefaultMagic):
+    from django.core.serializers.json import DjangoJSONEncoder
+
+    encoder = DjangoJSONEncoder
+
     def get_query_args(self, request):
         return {
-            k: v[0] if v and isinstance(v, list) else v for k, v in request.args.items()
+            k: v[0] if v and isinstance(v, list) else v for k, v in request.GET.items()
         }
 
     def get_request_json(self, request):
@@ -16,8 +20,12 @@ class MagicDjango(DefaultMagic):
             raise ExceptionWithStatusCode(str(e), status=400)
 
     def get_final_response_from_dict(self, rv, rv_kw):
-        from django.http import HttpResponse
+        from django.http import JsonResponse
 
-        dump_kwargs = rv_kw.get("dump_kwargs", {})
-        data = self.json_dumps(rv, **dump_kwargs)
-        return HttpResponse(content=data, content_type="application/json", **rv_kw)
+        _kw = dict(json_dumps_params={"ensure_ascii": False})
+        _kw.update(rv_kw or {})
+        headers = _kw.pop("headers", {})
+        response = JsonResponse(rv, encoder=self.encoder, **_kw)
+        for k, v in headers.items():
+            response[k] = v
+        return response

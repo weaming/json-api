@@ -235,6 +235,6 @@ class DefaultMagic(Magic):
         return {
             "success": False,
             "reason": str(exception),
-            "type": str(type(exception)),
+            "type": exception.__class__.__name__,
             "status": status,
         }
