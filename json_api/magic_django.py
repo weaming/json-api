@@ -26,6 +26,7 @@ class MagicDjango(DefaultMagic):
         _kw.update(rv_kw or {})
         headers = _kw.pop("headers", {})
         response = JsonResponse(rv, encoder=self.encoder, **_kw)
+        response["Content-Type"] += "; charset=UTF-8"
         for k, v in headers.items():
             response[k] = v
         return response
