@@ -9,10 +9,13 @@ class MagicDjango(DefaultMagic):
     encoder = DjangoJSONEncoder
 
     def get_query_args(self, request):
-        return {
-            k: v[0] if v and isinstance(v, list) and len(v) <= 1 else v
-            for k, v in request.GET.items()
-        }
+        rv = {}
+        for k in request.GET.keys():
+            v: list = request.GET.getlist(k)
+            if len(v) <= 1:
+                v = v[0]
+            rv[k] = v
+        return rv
 
     def get_request_json(self, request):
         try:
