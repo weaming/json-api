@@ -10,7 +10,8 @@ class MagicDjango(DefaultMagic):
 
     def get_query_args(self, request):
         return {
-            k: v[0] if v and isinstance(v, list) else v for k, v in request.GET.items()
+            k: v[0] if v and isinstance(v, list) and len(v) <= 1 else v
+            for k, v in request.GET.items()
         }
 
     def get_request_json(self, request):
