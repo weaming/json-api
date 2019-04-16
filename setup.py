@@ -21,6 +21,12 @@ setup(
     url=gh_repo,  # Optional
     author="weaming",  # Optional
     author_email="garden.yuen@gmail.com",  # Optional
+    classifiers=[
+        'Intended Audience :: Developers',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
+    ],
     packages=find_packages(exclude=["contrib", "docs", "tests"]),  # Required
     keywords="abstract json api",  # Optional
     entry_points={},  # Optional
