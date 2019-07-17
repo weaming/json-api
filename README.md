@@ -46,7 +46,7 @@ magic.add_route("/api/user/info", get_user_information)
 
 
 if __name__ == "__main__":
-    debug = True if os.getenv("DEBUG") else False
+    debug = bool(os.getenv("DEBUG"))
     app.run(host="0.0.0.0", port=8000, debug=debug)
 ```
 
