@@ -1,7 +1,7 @@
 from .errors import MissingRequestDataException
 
 
-def validate_request_query(request_args, *args, **kwargs):
+def validate_request_query(request_args, kwname, *args, **kwargs):
     q_args = []
     q_kwargs = {}
     for k in args:
@@ -23,7 +23,11 @@ def validate_request_query(request_args, *args, **kwargs):
 
         q_kwargs[k] = value
 
-    return q_args, q_kwargs
+    return (
+        q_args,
+        q_kwargs,
+        {k: v for k, v in request_args.items if k not in q_args and k not in q_kwargs},
+    )
 
 
 def parse_boolean_value(v):

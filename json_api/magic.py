@@ -96,7 +96,7 @@ class Magic(object):
         """
         :return: return a handler function accept the `request` object as positional argument
         """
-        args, kwargs = get_signature(fn)
+        args, kwargs, kwname = get_signature(fn)
         args, kwargs = self.get_handler_parameters(args, kwargs)
 
         if self.handler_is_async:
@@ -104,8 +104,8 @@ class Magic(object):
             @wraps(fn)
             async def new_fn(request):
                 try:
-                    q_args, q_kwargs = validate_request_query(
-                        self.get_handler_arguments(request), *args, **kwargs
+                    q_args, q_kwargs, kwvars = validate_request_query(
+                        self.get_handler_arguments(request), kwname, *args, **kwargs
                     )
                 except MissingRequestDataException as e:
                     status = getattr(e, "status", 400)
@@ -120,7 +120,7 @@ class Magic(object):
                     return self.check_return(rv)
 
                 try:
-                    rv = await fn(request, *q_args, **q_kwargs)
+                    rv = await fn(request, *q_args, **q_kwargs, **kwvars or {})
                 except Exception as e:
                     status = getattr(e, "status", 500)
                     rv = (self.error_return_dict(e, status), status)
