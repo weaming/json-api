@@ -26,7 +26,7 @@ def validate_request_query(request_args, kwname, *args, **kwargs):
     return (
         q_args,
         q_kwargs,
-        {k: v for k, v in request_args.items if k not in q_args and k not in q_kwargs},
+        {k: v for k, v in request_args.items() if k not in q_args and k not in q_kwargs},
     )
 
 
