@@ -1,7 +1,7 @@
 from .errors import MissingRequestDataException
 
 
-def valida_request_query(request_args, *args, **kwargs):
+def validate_request_query(request_args, *args, **kwargs):
     q_args = []
     q_kwargs = {}
     for k in args:

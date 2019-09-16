@@ -1,7 +1,7 @@
 import json
 from functools import wraps
 
-from .validate import valida_request_query
+from .validate import validate_request_query
 from .signature import get_signature
 from .middleware import check_middleware_list
 from .errors import MissingRequestDataException
@@ -104,7 +104,7 @@ class Magic(object):
             @wraps(fn)
             async def new_fn(request):
                 try:
-                    q_args, q_kwargs = valida_request_query(
+                    q_args, q_kwargs = validate_request_query(
                         self.get_handler_arguments(request), *args, **kwargs
                     )
                 except MissingRequestDataException as e:
@@ -132,7 +132,7 @@ class Magic(object):
             @wraps(fn)
             def new_fn(request):
                 try:
-                    q_args, q_kwargs = valida_request_query(
+                    q_args, q_kwargs = validate_request_query(
                         self.get_handler_arguments(request), *args, **kwargs
                     )
                 except MissingRequestDataException as e:
