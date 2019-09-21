@@ -120,7 +120,7 @@ class Magic(object):
                     return self.check_return(rv)
 
                 try:
-                    q_kwargs.update(kwargs)
+                    q_kwargs.update(kwvars)
                     rv = await fn(request, *q_args, **q_kwargs)
                 except Exception as e:
                     status = getattr(e, "status", 500)
@@ -133,8 +133,8 @@ class Magic(object):
             @wraps(fn)
             def new_fn(request):
                 try:
-                    q_args, q_kwargs = validate_request_query(
-                        self.get_handler_arguments(request), *args, **kwargs
+                    q_args, q_kwargs, kwvars = validate_request_query(
+                        self.get_handler_arguments(request), kwname, *args, **kwargs
                     )
                 except MissingRequestDataException as e:
                     status = getattr(e, "status", 400)
@@ -149,6 +149,7 @@ class Magic(object):
                     return self.check_return(rv)
 
                 try:
+                    q_kwargs.update(kwvars)
                     rv = fn(request, *q_args, **q_kwargs)
                 except Exception as e:
                     status = getattr(e, "status", 500)
