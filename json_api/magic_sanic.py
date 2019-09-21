@@ -1,5 +1,10 @@
+from json import dumps
+from functools import partial
 from .magic import DefaultMagic
 from .errors import ExceptionWithStatusCode
+
+
+json_dumps = partial(dumps, separators=(",", ":"), ensure_ascii=False)
 
 
 class MagicSanic(DefaultMagic):
@@ -29,4 +34,4 @@ class MagicSanic(DefaultMagic):
     def get_final_response_from_dict(self, rv, rv_kw):
         from sanic.response import json
 
-        return json(rv, **rv_kw)
+        return json(rv, dumps=json_dumps, **rv_kw)
