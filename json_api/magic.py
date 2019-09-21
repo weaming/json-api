@@ -120,7 +120,8 @@ class Magic(object):
                     return self.check_return(rv)
 
                 try:
-                    rv = await fn(request, *q_args, **q_kwargs, **kwvars or {})
+                    q_kwargs.update(kwargs)
+                    rv = await fn(request, *q_args, **q_kwargs)
                 except Exception as e:
                     status = getattr(e, "status", 500)
                     rv = (self.error_return_dict(e, status), status)
