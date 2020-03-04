@@ -1,5 +1,6 @@
 import json
 from functools import wraps
+import traceback
 
 from .validate import validate_request_query
 from .signature import get_signature
@@ -123,6 +124,7 @@ class Magic(object):
                     q_kwargs.update(kwvars)
                     rv = await fn(request, *q_args, **q_kwargs)
                 except Exception as e:
+                    traceback.print_exc()
                     status = getattr(e, "status", 500)
                     rv = (self.error_return_dict(e, status), status)
 
