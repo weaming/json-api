@@ -24,7 +24,6 @@ setup(
     classifiers=[
         'Intended Audience :: Developers',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
     ],
     packages=find_packages(exclude=["contrib", "docs", "tests"]),  # Required
